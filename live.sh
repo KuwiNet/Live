@@ -18,7 +18,6 @@ ffmpeg_install(){
 # 安装FFMPEG
 read -p "你的机器内是否已经安装过FFmpeg4.x?安装FFmpeg才能正常推流,是否现在安装FFmpeg?(yes/no):" Choose
 if [ $Choose = "yes" ];then
-	yum -y install wget
 	wget --no-check-certificate https://www.johnvansickle.com/ffmpeg/old-releases/ffmpeg-4.0.3-64bit-static.tar.xz
 	tar -xJf ffmpeg-4.0.3-64bit-static.tar.xz
 	cd ffmpeg-4.0.3-64bit-static
