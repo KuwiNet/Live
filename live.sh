@@ -86,7 +86,7 @@ stream_stop(){
 
 # 开始菜单设置
 echo -e "${yellow} 7×24 全天候不间断无人值守循环直播推流 ${font}"
-echo -e "${yellow} 适用于 CentOS/Debian/Ubuntu/Fedora (32bit/64bit) ${font}"
+echo -e "${yellow} 适用于CentOS/Debian/Ubuntu/Fedora (32bit/64bit) ${font}"
 echo -e "${yellow} LALA 编写    KuwiNet 修改 ${font}"
 echo -e "${red} 请确定此脚本目前是在screen窗口内运行的! ${font}"
 echo -e "${green} 1.安装FFmpeg (机器要安装FFmpeg才能正常推流) ${font}"
