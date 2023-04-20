@@ -19,11 +19,10 @@ apt-get -y install screen wget
 wget -N https://raw.githubusercontent.com/KuwiNet/Live/main/live.sh
 chmod 755 /root/live.sh
 ```
-3、运行live.sh安装FFmpeg
+3、运行live.sh安装FFmpeg，选择1安装FFmpeg。
 ```
 ./live.sh
 ```
-选择1安装FFmpeg。</br>
 4、新建窗口，准备直播推流，再次运行live.sh，选择2，按提示操作就好。
 ```
 screen -S live
