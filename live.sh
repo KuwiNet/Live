@@ -57,7 +57,7 @@ if [ $watermark = "y" ];then
 	do
 		cd $folder
 		video=$(find ./ -type f | shuf -n 1)
-		ffmpeg -re -i "$video" -i "$image" -filter_complex overlay=W-w-5:5 -c:v 3000k -c:a aac -b:a 92k -strict -2 -f flv ${rtmp}
+		ffmpeg -re -i "$video" -i "$image" -filter_complex overlay=W-w-5:5 -c:v 6000k -c:a aac -b:a 192k -strict -2 -f flv ${rtmp}
 	done
 fi
 if [ $watermark = "n" ]
@@ -68,7 +68,7 @@ then
 	do
 		cd $folder
 		video=$(find ./ -type f | shuf -n 1)
-  ffmpeg -re -i "$video" -preset ultrafast -vcodec libx264 -g 60 -b:v 3000k -c:a aac -b:a 92k -strict -2 -f flv ${rtmp}
+  ffmpeg -re -i "$video" -preset ultrafast -vcodec libx264 -g 60 -b:v 6000k -c:a aac -b:a 192k -strict -2 -f flv ${rtmp}
  done
 fi
  }
