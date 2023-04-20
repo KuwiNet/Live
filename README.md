@@ -1,4 +1,4 @@
-# 24×7全天候不间断直播推流
+# 7×24 全天候不间断无人值守循环直播推流
 在荒岛博客《<a href="https://lala.im/4816.html" target="_blank">FFmpeg循环推流脚本</a>》的代码基础上结合<a href="https://www.youtube.com/@AkilaZhang" target="_blank">电丸科技AK</a>的视频（https://www.youtube.com/watch?v=Ko20sPb93fo ）修改而成，方便个人使用而已。
 ## 使用方法
 1、新建视频文件夹，并上传你想直播的视频（FTP或其他方法，我用的<a href="http://www.hostbuf.com/t/988.html" target="_blank">FinalShell</a>很好用。）自己动手使用Rclone挂载GoogleDrive或OneDrive也可以：
