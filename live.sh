@@ -72,6 +72,11 @@ then
 fi
  }
 
+#查看推流进程
+stream_ls(){
+	screen -ls
+	}
+
 # 停止推流
 stream_stop(){
 	screen -S live -X quit
@@ -83,9 +88,10 @@ echo -e "${yellow} CentOS7 X86_64 FFmpeg无人值守循环推流 For LALA.IM ${f
 echo -e "${red} 请确定此脚本目前是在screen窗口内运行的! ${font}"
 echo -e "${green} 1.安装FFmpeg (机器要安装FFmpeg才能正常推流) ${font}"
 echo -e "${green} 2.开始无人值守循环推流 ${font}"
-echo -e "${green} 3.停止推流 ${font}"
+echo -e "${green} 3.查看推流进程 ${font}"
+echo -e "${green} 4.停止推流 ${font}"
 start_menu(){
-    read -p "请输入数字(1-3),选择你要进行的操作:" num
+    read -p "请输入数字(1-4),选择你要进行的操作:" num
     case "$num" in
         1)
         ffmpeg_install
@@ -93,7 +99,10 @@ start_menu(){
         2)
         stream_start
         ;;
-        3)
+	3)
+        stream_ls
+        ;;
+        4)
         stream_stop
         ;;
         *)
