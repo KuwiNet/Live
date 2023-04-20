@@ -74,7 +74,7 @@ fi
 
 # 停止推流
 stream_stop(){
-	screen -S stream -X quit
+	screen -S live -X quit
 	killall ffmpeg
 	}
 
