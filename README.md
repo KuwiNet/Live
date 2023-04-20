@@ -15,12 +15,12 @@ Ubuntu/Debian
 apt-get -y install screen wget
 ```
 2、下载live.sh并赋权，以下需要root权限使用，具体可输入su并输入密码即可：
-国内服务器
+### 国内服务器
 ```
 wget -N https://gitee.com/kuwinet/live/raw/master/live.sh
 chmod 755 /root/live.sh
 ```
-国外服务器
+### 国外服务器
 ```
 wget -N https://raw.githubusercontent.com/KuwiNet/Live/main/live.sh
 chmod 755 /root/live.sh
