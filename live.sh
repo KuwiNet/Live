@@ -56,8 +56,10 @@ if [ $watermark = "y" ];then
 	while true
 	do
 		cd $folder
-		video=$(find ./ -type f | shuf -n 1)
-		ffmpeg -re -i "$video" -i "$image" -filter_complex overlay=W-w-5:5 -c:v 6000k -c:a aac -b:a 192k -strict -2 -f flv ${rtmp}
+		for video in $(ls *.mp4)
+		do
+		ffmpeg -re -i "$video" -i "$image" -filter_complex overlay=W-w-5:5 -c:v libx264 -c:a aac -b:a 192k -strict -2 -f flv ${rtmp}
+		done
 	done
 fi
 if [ $watermark = "n" ]
