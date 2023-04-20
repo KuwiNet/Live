@@ -23,7 +23,7 @@ chmod 755 /root/live.sh
 ```
 ./live.sh
 ```
-4、新建窗口，准备直播推流，再次运行live.sh，选择2，按提示操作就好，<b>每次推流使用下方代码，确保在screen窗口内运行</b>，否则ssh连接窗口不能关闭。
+4、新建窗口，准备直播推流，再次运行live.sh，选择2，按提示操作就好，<b style="color:red;">每次推流使用下方代码，确保在screen窗口内运行</b>，否则ssh连接窗口不能关闭。
 ```
 screen -S live
 ./live.sh
