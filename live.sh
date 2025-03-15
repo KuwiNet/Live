@@ -17,12 +17,11 @@ font="\033[0m"
 
 ffmpeg_install(){
 # 安装FFMPEG
-read -p "你的机器内是否已经安装过FFmpeg4.x?安装FFmpeg才能正常推流,是否现在安装FFmpeg?(yes[y]/no[n]):" Choose
+read -p "你的机器内是否已经安装过FFmpeg?安装FFmpeg才能正常推流,是否现在安装FFmpeg?(yes[y]/no[n]):" Choose
 if [ $Choose = "y" ];then
-	wget --no-check-certificate https://www.johnvansickle.com/ffmpeg/old-releases/ffmpeg-4.0.3-64bit-static.tar.xz
-	tar -xJf ffmpeg-4.0.3-64bit-static.tar.xz
-	cd ffmpeg-4.0.3-64bit-static
-	mv ffmpeg /usr/bin && mv ffprobe /usr/bin && mv qt-faststart /usr/bin && mv ffmpeg-10bit /usr/bin
+	wget --no-check-certificate https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz
+	tar -xJf ffmpeg-release-amd64-static.tar.xz
+     cd ffmpeg-*-amd64-static/ && sudo mv ff{mpeg,probe} qt-faststart /usr/bin/
 fi
 if [ $Choose = "n" ]
 then
