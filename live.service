@@ -1,0 +1,18 @@
+[Unit]
+Description=Live 7x24 FFmpeg loop streaming
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart="/usr/local/bin/live.sh" start
+ExecStop="/usr/local/bin/live.sh" stop
+Restart=always
+RestartSec=10
+KillMode=mixed
+TimeoutStopSec=15
+Nice=-5
+LimitNOFILE=65535
+
+[Install]
+WantedBy=multi-user.target

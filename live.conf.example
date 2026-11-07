@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+# live.sh 配置模板
+# 复制为 /etc/live.conf（或脚本同目录 live.conf、~/.live.conf），权限改成 600。
+# 该文件包含推流码，切勿提交到 Git 仓库或贴到公开渠道。
+
+# 推流地址，支持 rtmp:// rtmps:// srt:// udp://
+STREAM_URL="rtmp://live.example.com/live/你的推流码"
+
+# 视频目录（绝对路径，不要带结尾斜杠）
+VIDEO_DIR="/opt/video"
+
+# 水印（留空不加水印；建议 png 带透明通道）
+WATERMARK_IMAGE=""
+WATERMARK_MARGIN=8
+
+# 编码参数
+VIDEO_BITRATE="6000k"
+AUDIO_BITRATE="192k"
+PRESET="veryfast"      # 低配机器可用 ultrafast / superfast
+TUNE="zerolatency"
+X264_PROFILE="high"
+
+# 统一输出（推荐，避免不同素材分辨率/帧率来回跳导致平台断流重建）
+HEIGHT=720             # 0 = 保持源分辨率
+FPS=30                 # 0 = 跟随源
+GOP=0                  # 0 = 自动（FPS*2，未设 FPS 时 60）
+
+# 播放策略
+ORDER="random"         # random 每轮随机打乱 / name 按文件名顺序
+MEDIA_DEPTH=1          # 视频目录递归深度，1 = 只扫当前目录
+
+# 异常与日志
+SLEEP_ON_ERROR=5       # ffmpeg 非正常退出后的等待秒数
+LOGLEVEL="warning"
+LOG_FILE=""            # 留空输出到终端/systemd journal；建议 "/var/log/live.log"
