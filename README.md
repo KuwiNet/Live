@@ -60,7 +60,7 @@ chmod 755 /root/live.sh
 
 
 ```
-wget -O /root/live.sh https://gitee.com/kuwinet/live/raw/master/live.sh
+wget -O /root/live.sh https://gitee.com/kuwinet/live/raw/main/live.sh
 chmod 755 /root/live.sh
 ```
 
