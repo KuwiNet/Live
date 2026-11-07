@@ -127,6 +127,9 @@ vi /etc/live.conf
 | `HEIGHT` / `FPS`                  | 统一输出分辨率 / 帧率，素材杂乱时建议设 `720` / `30`             |
 | `ORDER`                           | `random`（每轮随机）或 `name`（按文件名顺序）                 |
 | `WATERMARK_IMAGE`                 | 水印图片路径，留空不加                                    |
+| `ENCODER`                         | 编码器：`libx264`（默认）/ `h264_nvenc` / `h264_qsv` / `h264_vaapi` |
+| `NVENC_PRESET` / `NVENC_RC`       | NVENC 用，`p1`~`p7` / `cbr`·`vbr`                 |
+| `VAAPI_DEVICE`                    | VAAPI 用，默认 `/dev/dri/renderD128`               |
 | `LOG_FILE`                        | 日志路径，留空则进 systemd journal                      |
 
 ## 四、运行
@@ -176,7 +179,26 @@ screen -r live             # 进入查看，Ctrl-A D 脱离
 
 * **码率**：`6000k` 适合 1080p 平台默认画质，上行带宽不足时下调到 `3000k` 或 `4000k`，否则必卡。
 
-* **CPU**：纯软编（libx264）对 CPU 敏感。低配机器用 `PRESET="ultrafast"`；有独显可把编码器换成 `h264_nvenc`（需自行调整脚本中的编码器参数）。
+* **CPU / 硬件加速**：默认 `libx264` 软编，低配机器把 `PRESET` 调成 `ultrafast`。有独显或核显时改 `ENCODER` 即可，脚本已按编码器自动切换对应参数（不会把 `-preset veryfast`、`-tune zerolatency` 这类 x264 参数硬塞给 NVENC）：
+
+
+
+```
+# NVIDIA 独显（需驱动 + ffmpeg 含 nvenc，BtbN 静态包自带）
+ENCODER="h264_nvenc"
+NVENC_PRESET="p4"          # p1 最快 / p7 画质最好
+NVENC_RC="cbr"
+
+# Intel 核显
+ENCODER="h264_qsv"
+PRESET="veryfast"
+
+# Linux 上 AMD/Intel 走 VAAPI（脚本会自动加 format=nv12,hwupload）
+ENCODER="h264_vaapi"
+VAAPI_DEVICE="/dev/dri/renderD128"
+```
+
+启动时若编码器不可用（没装驱动 / ffmpeg 未编译该编码器），配置校验会直接报出来，不会等到推流跑起来才发现。
 
 * **素材一致性**：不同分辨率 / 帧率混播容易触发平台断流重建，建议 `HEIGHT=720`、`FPS=30` 统一输出。
 

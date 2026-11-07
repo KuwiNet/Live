@@ -13,12 +13,16 @@ VIDEO_DIR="/opt/video"
 WATERMARK_IMAGE=""
 WATERMARK_MARGIN=8
 
-# 编码参数
+# 编码器
 VIDEO_BITRATE="6000k"
 AUDIO_BITRATE="192k"
-PRESET="veryfast"      # 低配机器可用 ultrafast / superfast
+ENCODER="libx264"      # libx264 | h264_nvenc | h264_qsv | h264_vaapi
+PRESET="veryfast"      # libx264 / qsv 用，低配机器可用 ultrafast
 TUNE="zerolatency"
 X264_PROFILE="high"
+NVENC_PRESET="p4"      # nvenc 用，p1 最快 ~ p7 画质最好
+NVENC_RC="cbr"         # nvenc 用，cbr / vbr
+VAAPI_DEVICE="/dev/dri/renderD128"   # vaapi 用
 
 # 统一输出（推荐，避免不同素材分辨率/帧率来回跳导致平台断流重建）
 HEIGHT=720             # 0 = 保持源分辨率

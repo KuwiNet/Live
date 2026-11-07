@@ -31,9 +31,13 @@ WATERMARK_IMAGE=""            # 水印图片绝对路径，留空=不加
 WATERMARK_MARGIN=8            # 水印边距(px)
 VIDEO_BITRATE="6000k"         # 视频码率，如 6000k / 8M
 AUDIO_BITRATE="192k"
-PRESET="veryfast"             # ultrafast/superfast/veryfast/faster
+PRESET="veryfast"             # ultrafast/superfast/veryfast/faster（libx264 / qsv 用）
 TUNE="zerolatency"
 X264_PROFILE="high"
+ENCODER="libx264"             # libx264 | h264_nvenc | h264_qsv | h264_vaapi
+NVENC_PRESET="p4"             # p1(最快)~p7(最佳)
+NVENC_RC="cbr"                # cbr / vbr / constqp
+VAAPI_DEVICE="/dev/dri/renderD128"
 HEIGHT=0                      # 统一输出高度（如 720），0=保持源分辨率
 FPS=0                         # 统一输出帧率（如 30），0=跟随源
 GOP=0                         # 关键帧间隔，0=自动(FPS*2 或 60)
@@ -130,6 +134,17 @@ check_config() {
 	[[ $HEIGHT =~ ^[0-9]+$ ]] || { log ERR "HEIGHT 必须是 0 或正整数"; ok=0; }
 	[[ $FPS =~ ^[0-9]+$ ]] || { log ERR "FPS 必须是 0 或正整数"; ok=0; }
 	[[ $GOP =~ ^[0-9]+$ ]] || { log ERR "GOP 必须是 0 或正整数"; ok=0; }
+	case $ENCODER in
+		libx264|h264_nvenc|h264_qsv|h264_vaapi) ;;
+		*) log ERR "ENCODER 只能是 libx264 / h264_nvenc / h264_qsv / h264_vaapi"; ok=0 ;;
+	esac
+	# 非软编时确认本机 ffmpeg 确实带这个编码器
+	if [[ $ok == 1 && $ENCODER != libx264 ]]; then
+		if ! ffmpeg -hide_banner -encoders 2>/dev/null | awk '{print $2}' | grep -qx "$ENCODER"; then
+			log ERR "当前 ffmpeg 未包含 $ENCODER 编码器：请用 './live.sh setup static' 装 GPL 静态包，或改回 ENCODER=libx264"
+			ok=0
+		fi
+	fi
 	[[ $ok == 1 ]]
 }
 
@@ -190,16 +205,27 @@ build_ffmpeg_args() {
 	[[ $FPS -gt 0 ]] && FF+=(-r "$FPS")
 	(( gop == 0 )) && { if (( FPS > 0 )); then gop=$(( FPS * 2 )); else gop=60; fi; }
 
+	# ---- 滤镜图：label 串联（缩放 / 水印 / vaapi 上传）----
+	local cur="[0:v]" n=0
+	if [[ $ENCODER == h264_vaapi ]]; then
+		FF+=(-vaapi_device "$VAAPI_DEVICE")
+	fi
+	if [[ -n $vf ]]; then
+		n=$((n + 1)); filters+="${cur}${vf}[s${n}];"; cur="[s${n}]"
+	fi
 	if (( has_wm == 1 )); then
-		local base="[0:v]"
-		if [[ -n $vf ]]; then
-			filters="[0:v]${vf}[bgv];"
-			base="[bgv]"
-		fi
-		filters+="${base}[1:v]overlay=W-w-${WATERMARK_MARGIN}:${WATERMARK_MARGIN}:eof_action=repeat[vout]"
-		FF+=(-filter_complex "$filters" -map "[vout]" -map 0:a:0?)
-	elif [[ -n $vf ]]; then
-		FF+=(-vf "$vf" -map 0:v:0 -map 0:a:0?)
+		n=$((n + 1))
+		filters+="${cur}[1:v]overlay=W-w-${WATERMARK_MARGIN}:${WATERMARK_MARGIN}:eof_action=repeat[s${n}];"
+		cur="[s${n}]"
+	fi
+	if [[ $ENCODER == h264_vaapi ]]; then
+		n=$((n + 1))
+		filters+="${cur}format=nv12,hwupload[s${n}];"
+		cur="[s${n}]"
+	fi
+	if [[ -n $filters ]]; then
+		filters=${filters%;}
+		FF+=(-filter_complex "$filters" -map "$cur" -map 0:a:0?)
 	else
 		FF+=(-map 0:v:0 -map 0:a:0?)
 	fi
@@ -208,13 +234,29 @@ build_ffmpeg_args() {
 	bnum=${VIDEO_BITRATE//[^0-9]/}
 	bufsize="$(( bnum * 2 ))${unit}"
 
-	FF+=(
-		-c:v libx264 -preset "$PRESET" -tune "$TUNE" -profile:v "$X264_PROFILE"
-		-pix_fmt yuv420p -g "$gop" -keyint_min "$gop" -sc_threshold 0
-		-b:v "$VIDEO_BITRATE" -maxrate "$VIDEO_BITRATE" -bufsize "$bufsize"
-		-c:a aac -b:a "$AUDIO_BITRATE" -ar 44100 -ac 2
-		-flush_packets 1
-	)
+	# ---- 编码器（软编 / NVENC / QSV / VAAPI）----
+	case $ENCODER in
+		h264_nvenc)
+			FF+=(-c:v h264_nvenc -preset "$NVENC_PRESET" -rc:v "$NVENC_RC" \
+				-profile:v "$X264_PROFILE" -pix_fmt yuv420p -g "$gop" \
+				-b:v "$VIDEO_BITRATE" -maxrate "$VIDEO_BITRATE" -bufsize "$bufsize")
+			;;
+		h264_qsv)
+			FF+=(-c:v h264_qsv -preset "$PRESET" -profile:v "$X264_PROFILE" \
+				-pix_fmt nv12 -g "$gop" \
+				-b:v "$VIDEO_BITRATE" -maxrate "$VIDEO_BITRATE" -bufsize "$bufsize")
+			;;
+		h264_vaapi)
+			FF+=(-c:v h264_vaapi -profile:v "$X264_PROFILE" -g "$gop" \
+				-b:v "$VIDEO_BITRATE" -maxrate "$VIDEO_BITRATE" -bufsize "$bufsize")
+			;;
+		*)
+			FF+=(-c:v libx264 -preset "$PRESET" -tune "$TUNE" -profile:v "$X264_PROFILE" \
+				-pix_fmt yuv420p -g "$gop" -keyint_min "$gop" -sc_threshold 0 \
+				-b:v "$VIDEO_BITRATE" -maxrate "$VIDEO_BITRATE" -bufsize "$bufsize")
+			;;
+	esac
+	FF+=(-c:a aac -b:a "$AUDIO_BITRATE" -ar 44100 -ac 2 -flush_packets 1)
 
 	case $STREAM_URL in
 		srt://*|udp://*) FF+=(-f mpegts) ;;
@@ -610,6 +652,10 @@ cmd_config() {
 	read -r od
 	ORDER=${od:-$ORDER}
 
+	printf '%s' "编码器 libx264/h264_nvenc/h264_qsv/h264_vaapi [$ENCODER]: "
+	read -r enc
+	ENCODER=${enc:-$ENCODER}
+
 	umask 077
 	{
 		printf '#!/usr/bin/env bash\n'
@@ -620,9 +666,13 @@ cmd_config() {
 		printf 'WATERMARK_MARGIN=%q\n' "$WATERMARK_MARGIN"
 		printf 'VIDEO_BITRATE=%q\n' "$VIDEO_BITRATE"
 		printf 'AUDIO_BITRATE=%q\n' "$AUDIO_BITRATE"
+		printf 'ENCODER=%q\n' "$ENCODER"
 		printf 'PRESET=%q\n' "$PRESET"
 		printf 'TUNE=%q\n' "$TUNE"
 		printf 'X264_PROFILE=%q\n' "$X264_PROFILE"
+		printf 'NVENC_PRESET=%q\n' "$NVENC_PRESET"
+		printf 'NVENC_RC=%q\n' "$NVENC_RC"
+		printf 'VAAPI_DEVICE=%q\n' "$VAAPI_DEVICE"
 		printf 'HEIGHT=%q\n' "$HEIGHT"
 		printf 'FPS=%q\n' "$FPS"
 		printf 'GOP=%q\n' "$GOP"
@@ -658,6 +708,12 @@ usage() {
 
 FFmpeg 版本：系统源通常较旧（Debian 12=5.1、Ubuntu 24.04=6.1），
 需要新版请用 setup static（当前 9.0 已实测兼容本脚本参数）。
+
+编码器（配置项 ENCODER）：
+  libx264      软编，默认，兼容性最好但吃 CPU
+  h264_nvenc    NVIDIA 独显，CPU 占用可降到个位数
+  h264_qsv      Intel 核显
+  h264_vaapi    Linux AMD/Intel，需指定 VAAPI_DEVICE
 
 配置文件: \$LIVE_CONF → $SCRIPT_DIR/live.conf → /etc/live.conf → ~/.live.conf
 EOF
